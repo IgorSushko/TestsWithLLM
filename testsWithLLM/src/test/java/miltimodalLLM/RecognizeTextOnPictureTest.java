@@ -2,32 +2,25 @@ package miltimodalLLM;
 
 import dataProvider.RequestToLLM;
 import org.testng.annotations.Test;
+import restAction.LocalLLMActions;
 
 import java.io.IOException;
 
-import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RecognizeTextOnPictureTest {
-    String baseUrl = "http://localhost:1234/v1";
-    String endPointMethod = "/chat/completions";
+    private final LocalLLMActions restAction = new LocalLLMActions(
+            "http://localhost:1234/v1",
+            "/chat/completions"
+    );
 
     @Test
     public void recognizeExpectedWordOnPicture() throws IOException {
+        String requestBody = RequestToLLM.getRequestToRecognizeImage();
 
-        String llmResponse = given()
-                .baseUri(baseUrl)
-                .contentType("application/json")
-                .body(RequestToLLM.getRequestToRecognizeImage())
-                .log().all().
-                when()
-                .post(endPointMethod).
-                then()
-                .log().all()
-                .statusCode(200)
-                .extract().body().jsonPath().getString("choices[0].message.content");
+        String llmResponse = restAction.sendImageRecognitionRequest(requestBody);
 
-        assertThat(llmResponse).as("Response from LLM doesn't equal to expected")
+        assertThat(llmResponse).as("LLM doesn't find expected word")
                 .isEqualToIgnoringCase("yes");
     }
 }
